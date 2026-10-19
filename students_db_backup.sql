@@ -57,40 +57,40 @@ USE students_db;
 -- PRIMARY KEY means student_id must be unique and may never be empty.
 -- ======================================================================
 
-CREATE TABLE STUDENT (
-    student_id  INT          NOT NULL,
-    first_name  VARCHAR(30)  NOT NULL,
-    last_name   VARCHAR(30)  NOT NULL,
-    major       VARCHAR(40),
-    gpa         DECIMAL(3,2),
-    enrolled_on DATE,
-    PRIMARY KEY (student_id)
-);
+-- CREATE TABLE STUDENT (
+--     student_id  INT          NOT NULL,
+--     first_name  VARCHAR(30)  NOT NULL,
+--     last_name   VARCHAR(30)  NOT NULL,
+--     major       VARCHAR(40),
+--     gpa         DECIMAL(3,2),
+--     enrolled_on DATE,
+--     PRIMARY KEY (student_id)
+-- );
 
 
--- ======================================================================
--- SECTION 3. The data
--- Five students. Two enrolled in the same term, which is useful later when
--- you start filtering on a date.
--- ======================================================================
+-- -- ======================================================================
+-- -- SECTION 3. The data
+-- -- Five students. Two enrolled in the same term, which is useful later when
+-- -- you start filtering on a date.
+-- -- ======================================================================
 
-INSERT INTO STUDENT VALUES (1,'Ana',   'Reyes', 'CIS',              3.75,'2025-08-25');
-INSERT INTO STUDENT VALUES (2,'Marcus','Bell',  'Computer Science', 3.20,'2025-08-25');
-INSERT INTO STUDENT VALUES (3,'Priya', 'Nair',  'Mathematics',      3.90,'2026-01-12');
-INSERT INTO STUDENT VALUES (4,'Devon', 'Rao',   'CIS',              2.85,'2026-01-12');
-INSERT INTO STUDENT VALUES (5,'Elena', 'Vargas','Business',         3.45,'2026-08-24');
+-- INSERT INTO STUDENT VALUES (1,'Ana',   'Reyes', 'CIS',              3.75,'2025-08-25');
+-- INSERT INTO STUDENT VALUES (2,'Marcus','Bell',  'Computer Science', 3.20,'2025-08-25');
+-- INSERT INTO STUDENT VALUES (3,'Priya', 'Nair',  'Mathematics',      3.90,'2026-01-12');
+-- INSERT INTO STUDENT VALUES (4,'Devon', 'Rao',   'CIS',              2.85,'2026-01-12');
+-- INSERT INTO STUDENT VALUES (5,'Elena', 'Vargas','Business',         3.45,'2026-08-24');
 
 
--- ======================================================================
--- SECTION 4. The view
--- A view is a stored SELECT statement you can query as if it were a table.
--- This one shows only the names and the grade average, so anyone using it
--- cannot reach the id, the major or the enrollment date.
--- ======================================================================
+-- -- ======================================================================
+-- -- SECTION 4. The view
+-- -- A view is a stored SELECT statement you can query as if it were a table.
+-- -- This one shows only the names and the grade average, so anyone using it
+-- -- cannot reach the id, the major or the enrollment date.
+-- -- ======================================================================
 
-CREATE VIEW STUDENT_GPA AS
-SELECT first_name, last_name, gpa
-FROM STUDENT;
+-- CREATE VIEW STUDENT_GPA AS
+-- SELECT first_name, last_name, gpa
+-- FROM STUDENT;
 
 
 -- ======================================================================
@@ -123,18 +123,89 @@ SHOW FULL TABLES;
 
 
 -- STEP 11. Section 5.1, look at your schema
+-- Shows which database I am currently using.
+SELECT DATABASE() As my_schema;
 
+-- Shows the tables and views in my database.
+SHOW FULL TABLES;
 
 -- STEP 12. Section 5.2, look at the data types
-
+-- SHows the columns, data types, and keys in the STUDENT table.
+DESCRIBE STUDENT;
 
 -- STEP 13. Section 5.3, create a table by copying with a subquery
+-- Creates a copy of the STUDENT table with only four columns.
+CREATE TABLE STUDENT_COPY AS
+SELECT student_id, first_name, last_name, gpa
+FROM STUDENT;
 
+-- Displays all the student records in the copied table.
+SELECT * FROM STUDENT_COPY;
+
+-- Shows how the STUDENT_COPY table was created.
+SHOW CREATE TABLE STUDENT_COPY;
 
 -- STEP 14. Section 5.4, change the structure of the copy
+-- Adds a new column called honors to the STUDENT_COPY table.
+ALTER TABLE STUDENT_COPY ADD COLUMN honors CHAR(1);
 
+-- Changes the last_name column to allow up to 50 characters instead of 30.
+ALTER TABLE STUDENT_COPY MODIFY COLUMN last_name VARCHAR(50) NOT NULL;
+
+-- Adds a primary key to student_id so each student has a unique ID.
+ALTER TABLE STUDENT_COPY ADD PRIMARY KEY (student_id);
+
+-- Shows the structure of STUDENT_COPY to check the primary key.
+DESCRIBE STUDENT_COPY;
+
+-- Tests if the primary key prevents duplicate student IDs.
+-- INSERT INTO STUDENT_COPY VALUES (1,'Duplicate','Row',0.00,NULL);
+
+-- Removes the honors column that I added earlier.
+ALTER TABLE STUDENT_COPY DROP COLUMN honors;
 
 -- STEP 15. Section 5.5, insert, update and delete a row
+-- Adds a new student name Omar to the STUDENT_COPY table.
+INSERT INTO STUDENT_COPY VALUES (6,'Omar','Faruqi',3.10);
 
+-- Displays the student I just added using their student ID.
+SELECT * FROM STUDENT_COPY WHERE student_id = 6;
+
+-- Changes Omar's GPA from 3.10 to 3.35.
+UPDATE STUDENT_COPY SET gpa = 3.35 WHERE student_id = 6;
+
+-- Shows Omar's information to check that his GPA was updated correctly.
+SELECT * FROM STUDENT_COPY WHERE student_id = 6;
+
+-- Removes Omar from the STUDENT_COPY table using his studdent ID.
+DELETE FROM STUDENT_COPY WHERE student_id = 6;
+
+-- Counts how many student records are left after deleting Omar.
+SELECT COUNT(*) AS rows_left FROM STUDENT_COPY;
 
 -- STEP 16. Section 5.6, create a view and update through it
+-- Creates a view that shows studetns with a GPA of 3.50 or higher.
+CREATE VIEW HIGH_GPA AS
+SELECT student_id, first_name, last_name, gpa
+FROM STUDENT_COPY
+WHERE gpa >= 3.50;
+
+-- Displays students in the view from highest to lowest GPA.
+SELECT * FROM HIGH_GPA ORDER BY gpa DESC;
+
+-- Shows Ana's GPA before making any changes.
+SELECT student_id, gpa FROM STUDENT_COPY WHERE student_id = 1;
+
+-- Updates Ana's GPA to 3.95 through the HIGH GPA view.
+UPDATE HIGH_GPA SET gpa = 3.95 WHERE student_id = 1;
+
+-- Checks Ana's GPA in STUDENT_COPY after the update.
+SELECT student_id, gpa FROM STUDENT_COPY WHERE student_id = 1;
+
+-- Creates a view that counts the students and calculates their average GPA.
+CREATE VIEW GPA_SUMMARY AS
+SELECT COUNT(*) AS n, ROUND(AVG(gpa), 2) AS avg_gpa
+FROM STUDENT_COPY;
+
+-- Tests whether the average GPA in the summary view can be updated.
+UPDATE GPA_SUMMARY SET avg_gpa = 4.00;
